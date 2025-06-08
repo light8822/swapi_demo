@@ -1,0 +1,35 @@
+{
+  "name": "prueba-mtorres",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "deploy": "serverless deploy",
+    "remove": "serverless remove",
+    "invoke": "serverless invoke -f hello",
+    "invoke:local": "serverless invoke local -f hello",
+    "logs": "serverless logs -f hello --tail",
+    "gen:swagger": "node scripts/generate-swagger.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.30",
+    "jest": "^29.7.0",
+    "serverless": "^3.40.0",
+    "serverless-esbuild": "^1.55.0",
+    "serverless-openapi-documentation": "^0.4.0",
+    "ts-jest": "^29.3.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.826.0",
+    "@aws-sdk/lib-dynamodb": "^3.826.0",
+    "axios": "^1.9.0"
+  }
+}

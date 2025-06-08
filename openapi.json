@@ -1,0 +1,13 @@
+{
+  "openapi": "3.0.0",
+  "components": {
+    "schemas": {},
+    "securitySchemes": {}
+  },
+  "info": {
+    "title": "API Películas & Comentarios",
+    "description": "Documentación OpenAPI generada automáticamente",
+    "version": "1.0.0"
+  },
+  "paths": {}
+}

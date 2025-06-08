@@ -1,0 +1,236 @@
+service: prueba-mtorres
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1   
+  stage: dev
+
+  environment:
+    API_URL:       https://www.swapi.tech/api/films
+    IMDB_API_BASE: https://imdb236.p.rapidapi.com/api/imdb
+    IMDB_HOST:     imdb236.p.rapidapi.com
+    IMDB_KEY:      <API_KEY>
+
+    # Nombres de tabla
+    DYNAMO_TABLE:  ${self:service}-${self:provider.stage}-filmsCache
+    DYNAMO_COMM:   ${self:service}-${self:provider.stage}-comentarios
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:Scan
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMO_TABLE}
+        - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMO_COMM}
+
+functions:
+  films:
+    handler: src/handlers/films.handler
+    documentation:
+      tags:
+        - Films
+      summary: Lista películas fusionadas SWAPI + IMDb
+      description: Trae todas las películas o una sola, combinando datos de SWAPI y RapidAPI IMDb.
+      responses:
+        '200':
+          description: Éxito
+          bodyType: AllFilmsResponse
+    events:
+      - http:
+          path: /fusionados
+          method: get
+      - http:
+          path: /fusionados/{id}
+          method: get
+
+  comments:
+    handler: src/handlers/comments.handler
+    documentation:
+      tags:
+        - Comments
+      summary: Almacena un comentario
+      description: Inserta un comentario asociado a una película dada.
+      requestBody:
+        description: Objeto con el campo `comentario` (texto).
+      requestModels:
+        'application/json': CommentRequest
+      responses:
+        '201':
+          description: Comentario creado
+          bodyType: CommentResponse
+    events:
+      - http:
+          path: /almacenar/{id}
+          method: post
+
+  historial:
+    handler: src/handlers/historial.handler
+    documentation:
+      tags:
+        - Comments
+      summary: Historial de comentarios
+      description: Lista comentarios (globales o filtrados por película) con paginado.
+      requestParameters:
+        - name: movieId
+          in: path
+          required: false
+          description: ID de película para filtrar comentarios
+        - name: page
+          in: query
+          required: false
+          description: Página deseada (10 items por página)
+      responses:
+        '200':
+          description: Éxito
+          bodyType: HistoryResponse
+    events:
+      - http:
+          path: /historial
+          method: get
+      - http:
+          path: /historial/{movieId}
+          method: get       
+
+resources:
+  Resources:
+    FilmsCacheTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMO_TABLE}
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    CommentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMO_COMM}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST  
+
+plugins:
+  - serverless-esbuild
+  - serverless-openapi-documentation
+
+custom:
+  documentation:
+    version: '1.0.0'
+    title: 'API Películas & Comentarios'
+    description: 'Documentación OpenAPI generada automáticamente'
+    tags:
+      - name: Films
+        description: Operaciones de películas
+      - name: Comments
+        description: Operaciones de comentarios
+    models:
+      # Modelo de película fusionada
+      FilmSummary:
+        type: object
+        properties:
+          title:
+            type: string
+          episode:
+            type: integer
+          director:
+            type: string
+          releaseDate:
+            type: string
+          openingCrawl:
+            type: string
+          id:
+            type: string
+          url:
+            type: string
+          primaryImage:
+            type: string
+          trailer:
+            type: string
+
+      AllFilmsResponse:
+        type: object
+        properties:
+          message:
+            type: string
+          data:
+            type: array
+            items:
+              $ref: '#/components/schemas/FilmSummary'
+
+      SingleFilmResponse:
+        type: object
+        properties:
+          message:
+            type: string
+          data:
+            $ref: '#/components/schemas/FilmSummary'
+
+      CommentRequest:
+        type: object
+        properties:
+          comentario:
+            type: string
+        required:
+          - comentario
+
+      CommentResponse:
+        type: object
+        properties:
+          message:
+            type: string
+          data:
+            type: object
+            properties:
+              id:
+                type: string
+              movieId:
+                type: string
+              comentario:
+                type: string
+              fecha:
+                type: string
+
+      HistoryResponse:
+        type: object
+        properties:
+          message:
+            type: string
+          page:
+            type: integer
+          pages:
+            type: integer
+          total:
+            type: integer
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                movieId:
+                  type: string
+                comentario:
+                  type: string
+                fecha:
+                  type: string
+
+  esbuild:
+    bundle:      true
+    minify:      false
+    sourcemap:   true
+    target:      node20
+    platform:    node
+    concurrency: 10
