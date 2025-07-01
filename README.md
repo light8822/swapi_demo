@@ -1,4 +1,4 @@
-# evaluacion_softek
+# swapi_demo
 Evaluacion solicitada por Softek
 
 Combina la informacion de la API SWAPI con una API de IMDB para dar un resultado en conjunto, 
