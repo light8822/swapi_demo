@@ -1,5 +1,13 @@
 # swapi_demo
-Demostracion de uso de la Star Wars API (SWAPI)
+Demostracion de uso de la Star Wars API (SWAPI):
+
+Tecnologias utilizadas:
+Node.js version 20
+AWS Lambda 
+Serverless Framework
+DynamoDB
+Swagger
+Jest
 
 Combina la informacion de la API SWAPI con una API de IMDB para dar un resultado en conjunto, 
 se guarda un cacheo en DynamoDB, permite extraer la informacion de todas las peliculas como
